@@ -4,13 +4,25 @@ from setuptools import setup, find_packages
 
 
 def get_version():
-    """Get version from version.py script."""
+    """Get version from multiple sources with fallbacks."""
+    # First try to read from _version.py (created by CI/CD workflow)
+    try:
+        version_globals = {}
+        with open("_version.py", "r") as f:
+            exec(f.read(), version_globals)
+        return version_globals["__version__"]
+    except (FileNotFoundError, KeyError):
+        pass
+    
+    # Second try to run version.py script
     try:
         result = subprocess.run([sys.executable, "version.py"], capture_output=True, text=True, check=True)
         return result.stdout.strip()
     except (subprocess.CalledProcessError, FileNotFoundError):
-        # Fallback version if script fails
-        return "0.0.0.dev1"
+        pass
+    
+    # Final fallback version
+    return "0.0.0.dev1"
 
 
 setup(
