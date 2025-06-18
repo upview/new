@@ -144,41 +144,17 @@ def count_commits_since_tag(tag: str) -> int:
         return 0
 
 
+def get_date_based_version() -> str:
+    """Generate date-based version in format YYYY.M.D.HHMM"""
+    from datetime import datetime
+    now = datetime.now()
+    return f"{now.year}.{now.month}.{now.day}.{now.hour:02d}{now.minute:02d}"
+
+
 def determine_version() -> str:
-    """Determine the next version based on commit history."""
-    # Get latest version tag
-    latest_tag = get_latest_tag()
-    
-    # Parse current version
-    if latest_tag:
-        current_version = parse_version(latest_tag)
-        print(f"📦 Latest tag: {latest_tag} -> {current_version}", file=sys.stderr)
-    else:
-        current_version = (0, 0, 0)
-        print("📦 No version tags found, starting from 0.0.0", file=sys.stderr)
-    
-    # Get commits since last tag
-    commits = get_commits_since_tag(latest_tag)
-    commit_count = len(commits)
-    
-    print(f"🔍 Found {commit_count} commits since last release", file=sys.stderr)
-    
-    if commit_count == 0:
-        # No new commits, return current version
-        version_str = f"{current_version[0]}.{current_version[1]}.{current_version[2]}"
-        print(f"✅ No new commits, using current version: {version_str}", file=sys.stderr)
-        return version_str
-    
-    # Analyze commits for version bumping
-    has_breaking, has_feature, has_fix = analyze_commits(commits)
-    
-    print(f"📊 Commit analysis:", file=sys.stderr)
-    print(f"  Breaking changes: {has_breaking}", file=sys.stderr)
-    print(f"  New features: {has_feature}", file=sys.stderr)
-    print(f"  Bug fixes: {has_fix}", file=sys.stderr)
-    
-    # Determine new version
-    new_version = bump_version(current_version, has_breaking, has_feature, has_fix)
+    """Determine the next version using date-based format YYYY.M.D.HHMM[.dev]."""
+    # Get base date-based version
+    base_version = get_date_based_version()
     
     # Check if we're on main branch
     current_branch = get_current_branch()
@@ -187,13 +163,12 @@ def determine_version() -> str:
     print(f"🌿 Current branch: {current_branch} (main: {is_main_branch})", file=sys.stderr)
     
     if is_main_branch:
-        # Production release
-        version_str = f"{new_version[0]}.{new_version[1]}.{new_version[2]}"
+        # Production release - use date-based version
+        version_str = base_version
         print(f"🚀 Production version: {version_str}", file=sys.stderr)
     else:
-        # Dev build - count commits since last tag
-        dev_count = count_commits_since_tag(latest_tag)
-        version_str = f"{new_version[0]}.{new_version[1]}.{new_version[2]}.dev{dev_count}"
+        # Dev build - add .dev suffix
+        version_str = f"{base_version}.dev"
         print(f"🔧 Dev version: {version_str}", file=sys.stderr)
     
     return version_str
