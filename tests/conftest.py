@@ -108,6 +108,36 @@ def basic_run_data(random_serial_number):
     }
 
 
+def create_run_simple(client, serial_number: str, part_number: str, outcome: str = "PASS", **kwargs):
+    """Helper function to create runs with simplified API for testing."""
+    from tofupilot.openapi_client.models.run_create_body import RunCreateBody
+    from tofupilot.openapi_client.models.run_create_body_unit_under_test import RunCreateBodyUnitUnderTest
+    
+    # Build the basic body
+    unit_under_test = RunCreateBodyUnitUnderTest(
+        serial_number=serial_number,
+        part_number=part_number
+    )
+    
+    body = RunCreateBody(
+        unit_under_test=unit_under_test,
+        run_passed=(outcome.upper() == "PASS"),
+        procedure_id=kwargs.get("procedure_id", "default")
+    )
+    
+    # Add optional fields
+    if "procedure_version" in kwargs:
+        body.procedure_version = kwargs["procedure_version"]
+    if "started_at" in kwargs:
+        body.started_at = kwargs["started_at"]
+    if "duration_ms" in kwargs:
+        # Convert ms to ISO 8601 duration
+        seconds = kwargs["duration_ms"] / 1000
+        body.duration = f"PT{seconds}S"
+        
+    return client.runs.create(body=body)
+
+
 @pytest.fixture
 def sample_measurements():
     """Sample measurements for testing."""

@@ -1,8 +1,21 @@
+import subprocess
+import sys
 from setuptools import setup, find_packages
+
+
+def get_version():
+    """Get version from version.py script."""
+    try:
+        result = subprocess.run([sys.executable, "version.py"], capture_output=True, text=True, check=True)
+        return result.stdout.strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # Fallback version if script fails
+        return "0.0.0.dev1"
+
 
 setup(
     name="tofupilot",
-    version="2.0.0",
+    version=get_version(),
     description="A client library for accessing TofuPilot API v1",
     packages=find_packages(),
     package_data={
